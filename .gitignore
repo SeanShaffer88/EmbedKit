@@ -1,0 +1,4 @@
+/target
+# Downloaded, hash-pinned fixtures (ONNX Runtime packages, e2e model +
+# vocab): fetched by fetch.sh / fetch.ps1, never committed.
+/fixtures
