@@ -1,0 +1,45 @@
+# CI for EmbedKit — canonical WinDevKit workflow, adapted. Copy to
+# .github/workflows/ci.yml. NOTE: the GitHub App cannot create/edit
+# files under .github/workflows/ (no Workflows permission), so this
+# file is always added through the GitHub web UI.
+#
+# Two adaptations from the canonical cargo-only workflow, both
+# forced by the runtime-loaded engine:
+#   1. A fetch step downloads the pinned ONNX Runtime package and
+#      the e2e model + vocab (SHA-256 verified against pins.txt) —
+#      the embedder needs a real libonnxruntime to load. On the
+#      Windows runner the fetch runs through fetch.ps1 (PowerShell
+#      is the default shell); fetch.sh is the POSIX twin
+#      (`sh ./fetch.sh`).
+#   2. An explicitly-labeled e2e step runs the real semantic proof:
+#      all-MiniLM-L6-v2 embeddings must rank a paraphrase far above
+#      unrelated sentences, through the FFI, the tokenizer, the
+#      runtime binding, and the index. This is the step that proves
+#      the Windows LoadLibraryExW runtime-load path AND native
+#      embedding end to end.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  gate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Fetch pinned ONNX Runtime + e2e model/vocab (SHA-256 verified)
+        run: ./fetch.ps1
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --locked
+      - name: E2E embedding proof (real runtime, real model, semantic ranking)
+        env:
+          EK_E2E: "1"
+          EK_ORT_LIB: fixtures/ort/lib/onnxruntime.dll
+          EK_MODEL: fixtures/model.onnx
+          EK_VOCAB: fixtures/vocab.txt
+        run: cargo test --locked --test e2e -- --ignored --nocapture
+      - run: cargo build --release --locked
