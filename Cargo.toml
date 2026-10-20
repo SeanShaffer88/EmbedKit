@@ -1,0 +1,34 @@
+[package]
+name = "embed-kit"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+authors = ["Sean Shaffer"]
+description = "Local semantic search behind one clean C ABI: a pure-Rust embedding index plus BERT-class sentence embeddings via a runtime-loaded ONNX Runtime"
+license = "MIT"
+repository = "https://github.com/SeanShaffer88/EmbedKit"
+keywords = ["windows", "ffi", "embeddings", "semantic-search", "onnx"]
+categories = ["api-bindings", "text-processing"]
+
+[lib]
+name = "embedkit"
+crate-type = ["cdylib", "rlib", "staticlib"]
+
+# The Rust side is zero-dependency by design (house rule). The ONE
+# external component is ONNX Runtime, and it is never linked and never
+# committed: the embedder loads the user's libonnxruntime at runtime
+# through its C API (the WinRecovery runtime-load pattern). Pins for a
+# known-good runtime + the e2e model live in pins.txt; fetch.sh /
+# fetch.ps1 download them into fixtures/ (gitignored) for the e2e proof.
+# Without a runtime the crate still builds and unit-tests; embedder
+# calls then report EK_ERR_NOT_SUPPORTED while the vector index works.
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+# Deliberately NOT panic = "abort" (same deviation as Whisper): every
+# FFI entry point guards with catch_unwind, and the guard is the host
+# app's protection — it only works when panics unwind to the boundary.
