@@ -1,0 +1,27 @@
+# Pinned upstream artifacts. fetch.sh / fetch.ps1 refuse to proceed when
+# a downloaded file's SHA-256 does not match the pin. Bump = version +
+# hash together, in one commit, and re-run the e2e embedding proof.
+#
+# ONNX Runtime (Microsoft, MIT) is a RUNTIME component: EmbedKit loads
+# the user's libonnxruntime dynamically and never links or bundles it.
+# These two packages are pinned so the e2e proof (and users who want a
+# known-good source) have an exact, hash-verified runtime to point at.
+# EmbedKit v0.1 speaks ONNX Runtime C API version 31 (ORT_API_VERSION
+# in onnxruntime_c_api.h); newer runtimes stay compatible, older ones
+# are reported precisely as EK_ERR_NOT_SUPPORTED.
+ORT_VERSION=1.31.0
+ORT_LINUX_FILE=onnxruntime-linux-x64-1.31.0.tgz
+ORT_LINUX_URL=https://github.com/microsoft/onnxruntime/releases/download/v1.31.0/onnxruntime-linux-x64-1.31.0.tgz
+ORT_LINUX_SHA256=cc5c72baf5ae5c8238a6841f0897227be2d02826b9cf98eaf02fdefaeeb03a57
+ORT_WIN_FILE=onnxruntime-win-x64-1.31.0.zip
+ORT_WIN_URL=https://github.com/microsoft/onnxruntime/releases/download/v1.31.0/onnxruntime-win-x64-1.31.0.zip
+ORT_WIN_SHA256=3958d8a44984160692c1b4ffd0de3cb48f8c39f9d34bb31e433db06e30b82195
+# Test fixtures ONLY (not needed to build or use the DLL): the e2e
+# proof embeds real sentences with all-MiniLM-L6-v2 (BERT uncased,
+# 384-dim) from its official sentence-transformers Hugging Face repo.
+TEST_MODEL_NAME=model.onnx
+TEST_MODEL_URL=https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx
+TEST_MODEL_SHA256=6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452
+TEST_VOCAB_NAME=vocab.txt
+TEST_VOCAB_URL=https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/vocab.txt
+TEST_VOCAB_SHA256=07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3
