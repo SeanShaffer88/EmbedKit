@@ -21,7 +21,7 @@ use std::path::Path;
 use embedkit::ffi::{
     ek_embed, ek_embedder_create, ek_embedder_dim, ek_embedder_free, ek_free_string, ek_index_add,
     ek_index_add_text, ek_index_count, ek_index_create, ek_index_free, ek_index_load,
-    ek_index_save, ek_last_error, ek_search, ek_search_text,
+    ek_index_save, ek_last_error, ek_last_error_code, ek_search, ek_search_text,
 };
 use embedkit::index::cosine;
 
@@ -87,7 +87,17 @@ fn semantic_embedding_proof() {
         cs(&vocab).as_ptr(),
         0,
     );
-    assert!(emb != 0, "embedder creation failed");
+    if emb == 0 {
+        // Surface the DLL's own diagnosis — a bare "creation failed"
+        // cost a full CI round-trip once already.
+        let msg = unsafe { CStr::from_ptr(ek_last_error()) }
+            .to_string_lossy()
+            .into_owned();
+        panic!(
+            "embedder creation failed (code {}): {msg}",
+            ek_last_error_code()
+        );
+    }
     let dim = ek_embedder_dim(emb);
     println!("embedder dim: {dim}");
     assert_eq!(dim, 384, "all-MiniLM-L6-v2 embeds at 384");
