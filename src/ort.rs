@@ -174,6 +174,19 @@ mod loader {
 
 impl Library {
     pub fn load(path: &str) -> CResult<Library> {
+        // Canonicalize to an absolute path first: the
+        // LOAD_LIBRARY_SEARCH_* flags are specified for fully
+        // qualified paths, and dlopen's relative-path resolution
+        // depends on the process CWD — the caller pointed at one
+        // specific library, so resolve it once, unambiguously.
+        let abs = std::fs::canonicalize(path).map_err(|e| {
+            (
+                ERR_PLATFORM,
+                format!("failed to load ONNX Runtime library '{path}': cannot resolve path: {e}"),
+            )
+        })?;
+        let abs_string = abs.to_string_lossy().into_owned();
+        let path = abs_string.as_str();
         #[cfg(unix)]
         {
             let c = CString::new(path).map_err(|_| {
